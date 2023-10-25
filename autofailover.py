@@ -123,30 +123,54 @@ logging.info('Update Key Manifest: %s', manifest.instructions().as_str())
 
 manifest.statically_validate()
 
+urlint = "https://mainnet.radixdlt.com/statistics/validators/uptime"
+
+headers = {"Content-Type": "application/json; charset=utf-8"}
+
+dataint = {
+  "validator_addresses": [
+    BABYLON_VALIDATOR_ADDRESS
+  ]
+}
+
+response = requests.post(urlint, json=dataint)
+response_dict = response.json()
+current_epoch = response_dict["ledger_state"]["epoch"]
+epoch_history = int(current_epoch) - int(3)
+
+missed_proposals = int(0)
 
 url1 = "https://mainnet.radixdlt.com/statistics/validators/uptime"
 
 headers = {"Content-Type": "application/json; charset=utf-8"}
 
 data = {
-       "validator_addresses": [
-    "validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09"
+  "at_ledger_state": {
+    "epoch": current_epoch
+  },
+  "from_ledger_state": {
+    "epoch": epoch_history
+  },
+  "validator_addresses": [
+    BABYLON_VALIDATOR_ADDRESS
   ]
 }
 
-missed_proposals = int(0)
-current_epoch = int(0)
-
 #print("Starting Validator Missed Proposal Counter, Logging Commencing in 60s")
-logging.info('Starting Validator Missed Proposal Counter, Logging Commencing in 60s')
+logging.info('Please check manifest/addresses above for accuracy.  Validator Missed Proposals will commence logging in 30s')
+time.sleep(30)
 
 while missed_proposals < 6:
   response = requests.post(url1, json=data)
   response_dict = response.json()
-  current_epoch = response_dict["ledger_state"]["epoch"]
   missed_proposals = response_dict["validators"]['items'][0]['proposals_missed']
+  logging.info('Validator address: %s has missed %s proposals between current epoch: %s and past epoch: %s', BABYLON_VALIDATOR_ADDRESS, missed_proposals, current_epoch, epoch_history)
+  logging.info('...Waiting for 60s...')
   time.sleep(60)
-  logging.info('Validator address: %s has missed %s proposals at current epoch: %s', BABYLON_VALIDATOR_ADDRESS, missed_proposals, current_epoch)
+  response = requests.post(urlint, json=dataint)
+  response_dict = response.json()
+  current_epoch = response_dict["ledger_state"]["epoch"]
+  epoch_history = int(current_epoch) - int(3)
 
 if missed_proposals > 5:
   logging.info('Missed Proposals Exceed Set Limit - Failing Over Now...')
