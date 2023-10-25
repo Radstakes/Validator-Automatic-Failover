@@ -19,7 +19,7 @@ Before you start, there are some pre-requisites.  The scripts assume you are usi
 
 `pip3 install bip_utils`
 
-Next up, we need an account to hold the owner badge.  This can be your mobile wallet account (not a Ledger account for obvious reasons) but **you will be required to enter your seed phrase to extract the private key for the account, so please keep this in mind and be sure you're happy with the risk.**
+Next up, we need an account to hold the owner badge.  This can be your mobile wallet account (not a Ledger account for obvious reasons) but **you will be required to enter your seed phrase to extract the private key for the account, so please keep this in mind and be sure you're happy with the risk.  It is recommended to use a fresh seed phrase for this purpose.**
 
 Using the following script, paste your seed phrase when prompted and copy the resultant `private_key_bytes` (you will need this in the next step) and store it securely.  You should also check that the derived address is the same account you intend to use to hold your owner badge.  If you used the seed from the mobile wallet, this should be the first account you see in the wallet.
 
@@ -45,7 +45,7 @@ backup_public_key: bytearray = bytearray.fromhex(
     )
 ```
 
-**Warning - I wrote this script to suit my own validator (~0.5% stake) which is making around 4 proposals per epoch.  My intention here is to failover if more than 5 proposals are missed.  Depending on your stake weight you may like to tweak the threshold or time period settings which can be found below:**
+**Warning - I wrote this script to suit my own validator (~0.5% stake) which is making around 4 proposals per epoch.  My intention here is to failover if more than 5 proposals are missed in the past 3 epochs.  Depending on your stake weight you may like to tweak the threshold or time period settings which can be found below:**
 
 ```
 while missed_proposals < 6:
@@ -75,7 +75,7 @@ if missed_proposals > 5:
 ...
 ```
 
-Once you're done editing, save the file.  The script will query the Radix gateway every minute and check for missed proposals.  It should also be noted that any gateway can be used with this script (or even a core node for that matter) and the URL can be edited accordingly if that is the case.
+Once you're done editing, save the file.  The script will query the Radix gateway every minute and check for missed proposals in the past 3 epochs.  It should also be noted that any gateway can be used with this script (or even a core node for that matter) and the URL can be edited accordingly if that is the case.
 
 Now you're ready to test the script.  Firstly we will run it locally to check it behaves as expected, and then the following steps will cover how to set this up as a systemd process so it can run in the background.
 
@@ -86,17 +86,17 @@ Run the script using the following command:
 There may be some dependencies missed at this stage, if so just run `pip3 install...` if there's any packages you don't currently have.  If everything is working OK, the script should print the following logs:
 
 ```
-INFO:Babylon Address where Owner Badge is Located: account_rdx12y886kwuk0utlq8q9mpe6selc7gmrmcheunngjxdhuqe4ldsn02zpm
+INFO:Babylon Address where Owner Badge is Located: account_rdx129e74w084frkyzn2wv30d4y0l8mpvykf9af36n5akmzwe46ejaav8g
 INFO:Validator Babylon Address: validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09
 
 
 INFO:Update Key Manifest: CALL_METHOD
-    Address("account_rdx12y886kwuk0utlq8q9mpe6selc7gmrmcheunngjxdhuqe4ldsn02zpm")
+    Address("account_rdx129e74w084frkyzn2wv30d4y0l8mpvykf9af36n5akmzwe46ejaav8g")
     "lock_fee"
     Decimal("10")
 ;
 CALL_METHOD
-    Address("account_rdx12y886kwuk0utlq8q9mpe6selc7gmrmcheunngjxdhuqe4ldsn02zpm")
+    Address("account_rdx129e74w084frkyzn2wv30d4y0l8mpvykf9af36n5akmzwe46ejaav8g")
     "create_proof_of_non_fungibles"
     Address("resource_rdx1nfxxxxxxxxxxvdrwnrxxxxxxxxx004365253834xxxxxxxxxvdrwnr")
     Array<NonFungibleLocalId>(
@@ -109,18 +109,20 @@ CALL_METHOD
     Bytes("025fb0f5e60b616ceb0dffda8c76cc580b22bacc6b9bde3ca0a487b6688f332767")
 ;
 
-INFO:Starting Validator Missed Proposal Counter, Logging Commencing in 60s
+INFO:Please check manifest/addresses above for accuracy.  Validator Missed Proposals will commence logging in 30s
 ```
 
 It is wise at this point to check that the script is showing the expected values for the update_key method on your validator component.  Firstly check that the first 2 lines are showing the correct account address (where the owner badge is to be located) and your validator address.
 
 Review the transaction manifest, which should lock a fee from the account where the owner badge is, then provide a proof of the badge from this account (also ensure the badge local ID is correct here) and finally check the public key in the update_key method is correct for your backup node (reminder - ensure your validator address is in the config of your backup node first!)
 
-After 60s, the script will begin polling the Radix Gateway and you will start to see the following logs:
+After 30s, the script will begin polling the Radix Gateway and you will start to see the following logs:
 
 ```
-INFO:Validator address: validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09 has missed 0 proposals at current epoch: 40344
-INFO:Validator address: validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09 has missed 0 proposals at current epoch: 40345
+INFO:Validator address: validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09 has missed 0 proposals between current epoch: 40532 and past epoch: 40529
+INFO:...Waiting for 60s...
+INFO:Validator address: validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09 has missed 0 proposals between current epoch: 40532 and past epoch: 40529
+INFO:...Waiting for 60s...
 ```
 
 Once you're happy at this stage, we can interrupt the script using `ctrl+c`.  We can then move on to running the script as a systemd service.
@@ -164,6 +166,6 @@ And finally, you can observe the logs in the terminal using the following comman
 
 `journalctl -u autofailover.service -n 100 -f`
 
-Congratulations, the service is now checking your node periodically for missed proposals.  Once the threshold set has been reached, a transaction manifest to switch your validator to your backup node is created, signed and submitted to the Radix gateway.  At the next epoch rollover, your validator should automatically stop validating and your backup will take over.
+Congratulations, the service is now checking your node periodically for missed proposals in the past 3 epochs.  Once the threshold set has been reached, a transaction manifest to switch your validator to your backup node is created, signed and submitted to the Radix gateway.  At the next epoch rollover, your validator should automatically stop validating and your backup will take over.
 
 **Final notes - this method has been tested on Stokenet and Mainnet, but is still experimental.  Please use at your own risk and understand that I cannot accept any responsibility for unintended consequences, loss of private keys, any funds held on your accounts or the security of your validator owner badge.  In order to sign programmatically, the private key of the account holding your validator badge needs to be exposed to the script.  You should therefore ensure that the server or host used to run the script is secure and that access to the file is protected.**
