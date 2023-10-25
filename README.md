@@ -45,30 +45,20 @@ backup_public_key: bytearray = bytearray.fromhex(
     )
 ```
 
-Edit the API request with your own validator address:
-
-```
-url1 = "https://mainnet.radixdlt.com/statistics/validators/uptime"
-
-headers = {"Content-Type": "application/json; charset=utf-8"}
-
-data = {
-       "validator_addresses": [
-    "validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09"
-  ]
-}
-```
-
 **Warning - I wrote this script to suit my own validator (~0.5% stake) which is making around 4 proposals per epoch.  My intention here is to failover if more than 5 proposals are missed.  Depending on your stake weight you may like to tweak the threshold or time period settings which can be found below:**
 
 ```
 while missed_proposals < 6:
   response = requests.post(url1, json=data)
   response_dict = response.json()
-  current_epoch = response_dict["ledger_state"]["epoch"]
   missed_proposals = response_dict["validators"]['items'][0]['proposals_missed']
+  logging.info('Validator address: %s has missed %s proposals between current epoch: %s and past epoch: %s', BABYLON_VALIDATOR_ADDRESS, missed_proposals, current_epoch, epoch_history)
+  logging.info('...Waiting for 60s...')
   time.sleep(60)
-  logging.info('Validator address: %s has missed %s proposals at current epoch: %s', BABYLON_VALIDATOR_ADDRESS, missed_proposals, current_epoch)
+  response = requests.post(urlint, json=dataint)
+  response_dict = response.json()
+  current_epoch = response_dict["ledger_state"]["epoch"]
+  epoch_history = int(current_epoch) - int(3)
 
 if missed_proposals > 5:
   logging.info('Missed Proposals Exceed Set Limit - Failing Over Now...')
