@@ -161,9 +161,10 @@ logging.info('Please check manifest/addresses above for accuracy.  Validator Mis
 time.sleep(30)
 
 while missed_proposals < 6:
+  data = {"at_ledger_state": {"epoch": current_epoch},"from_ledger_state": {"epoch": epoch_history},"validator_addresses": [BABYLON_VALIDATOR_ADDRESS]}
   response = requests.post(url1, json=data)
   response_dict = response.json()
-  missed_proposals = response_dict["validators"]['items'][0]['proposals_missed']
+  missed_proposals = int(response_dict["validators"]['items'][0]['proposals_missed'])
   logging.info('Validator address: %s has missed %s proposals between current epoch: %s and past epoch: %s', BABYLON_VALIDATOR_ADDRESS, missed_proposals, current_epoch, epoch_history)
   logging.info('...Waiting for 60s...')
   time.sleep(60)
