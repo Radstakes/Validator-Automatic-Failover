@@ -156,7 +156,6 @@ data = {
   ]
 }
 
-#print("Starting Validator Missed Proposal Counter, Logging Commencing in 60s")
 logging.info('Please check manifest/addresses above for accuracy.  Validator Missed Proposals will commence logging in 30s')
 time.sleep(30)
 
@@ -166,8 +165,8 @@ while missed_proposals < 6:
   response_dict = response.json()
   missed_proposals = int(response_dict["validators"]['items'][0]['proposals_missed'])
   logging.info('Validator address: %s has missed %s proposals between current epoch: %s and past epoch: %s', BABYLON_VALIDATOR_ADDRESS, missed_proposals, current_epoch, epoch_history)
-  logging.info('...Waiting for 60s...')
-  time.sleep(60)
+  logging.info('...Waiting for 4 mins...')
+  time.sleep(240)
   response = requests.post(urlint, json=dataint)
   response_dict = response.json()
   current_epoch = response_dict["ledger_state"]["epoch"]
