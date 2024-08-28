@@ -19,11 +19,11 @@ import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 #network id is 0x01 for mainnet, or 0x02 for Stokenet
-network_id = 0x01
+network_id: int = 0x01
 
 private_key_bytes_ret: bytes = <enter private key bytes here>
 
-private_key_ret: PrivateKey = PrivateKey.new_ed25519(list(private_key_bytes_ret))
+private_key_ret: PrivateKey = PrivateKey.new_ed25519(private_key_bytes_ret)
 
 public_key: PublicKey = private_key_ret.public_key()
 
@@ -64,7 +64,7 @@ def validator_owner_badge_non_fungible_local_id(
 
 
 validator_address: Address = Address(BABYLON_VALIDATOR_ADDRESS)
-owner_badge_resource_address: Address = known_addresses(
+owner_badge_resource_address: Address = get_known_addresses(
 validator_address.network_id()
 ).resource_addresses.validator_owner_badge
 owner_badge_local_id: NonFungibleLocalId = (
@@ -74,7 +74,7 @@ validator_owner_badge_non_fungible_local_id(validator_address)
 backup_public_key: bytearray = bytearray.fromhex(
         "025fb0f5e60b616ceb0dffda8c76cc580b22bacc6b9bde3ca0a487b6688f332767"
     )
-address_book: KnownAddresses = known_addresses(network_id)
+address_book: KnownAddresses = get_known_addresses(network_id)
 xrd_address: Address = address_book.resource_addresses.xrd
 owner_badge: str = ("resource_rdx1nfxxxxxxxxxxvdrwnrxxxxxxxxx004365253834xxxxxxxxxvdrwnr")
 
