@@ -53,8 +53,8 @@ while missed_proposals < 6:
   response_dict = response.json()
   missed_proposals = response_dict["validators"]['items'][0]['proposals_missed']
   logging.info('Validator address: %s has missed %s proposals between current epoch: %s and past epoch: %s', BABYLON_VALIDATOR_ADDRESS, missed_proposals, current_epoch, epoch_history)
-  logging.info('...Waiting for 60s...')
-  time.sleep(60)
+  logging.info('...Waiting for 4 mins...')
+  time.sleep(240)
   response = requests.post(urlint, json=dataint)
   response_dict = response.json()
   current_epoch = response_dict["ledger_state"]["epoch"]
@@ -120,9 +120,9 @@ After 30s, the script will begin polling the Radix Gateway and you will start to
 
 ```
 INFO:Validator address: validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09 has missed 0 proposals between current epoch: 40532 and past epoch: 40529
-INFO:...Waiting for 60s...
+INFO:...Waiting for 4 minss...
 INFO:Validator address: validator_rdx1sds4prpgf0p25pu458fg468nw9rtwqdawwg9w45hgf0t95yd3ncs09 has missed 0 proposals between current epoch: 40532 and past epoch: 40529
-INFO:...Waiting for 60s...
+INFO:...Waiting for 4 mins...
 ```
 
 Once you're happy at this stage, we can interrupt the script using `ctrl+c`.  We can then move on to running the script as a systemd service.
