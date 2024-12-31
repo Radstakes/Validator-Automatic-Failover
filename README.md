@@ -16,11 +16,17 @@ This new version works in conjunction with the Validator Owner Badge Access Mana
 To utilise this new version, please copy the script above and edit as below to suit your validator:
 
 line 24 - add private key bytes
+
 line 49 - add your validator address
+
 line 53 - add owner component address (detailed in Radix Talk thread)
+
 line 56 - add access key badge local id (detailed in Radix Talk thread)
+
 line 59 - add public key of backup validator
+
 line 63 - add resource address for access key badge (detailed in Radix Talk thread)
+
 line 150 & 163 - add suitable missed proposal limits
 
 ---
