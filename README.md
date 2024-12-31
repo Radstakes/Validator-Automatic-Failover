@@ -7,6 +7,14 @@ All tools are provided for free to the Radix community, but if they are of benef
 
 ## Instructions
 
+**Update - 31/12/2024**
+
+A new version of the script has been added, see `autofailovermanager.py`
+
+This new version works in conjunction with the Validator Owner Badge Access Manager component, detailed in RadixTalk (https://radixtalk.com/t/validator-owner-badge-access-management/1930) and allows the Validator Owner Badge to be retained in a Ledger Hardware wallet, with a separate access key badge used in a hot wallet to update the key of the validator.
+
+---
+
 Before you start, there are some pre-requisites.  The scripts assume you are using Python3 and have only been tested on Ubuntu 22.04.  You should also ensure that your primary and backup node config has been updated with the validator address.  Please see the Radix documentation for further details.  There are also a number of dependencies which are required, these can be installed with the following commands:
 
 `sudo apt install python3-pip`
