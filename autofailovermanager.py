@@ -27,7 +27,7 @@ private_key_ret: PrivateKey = PrivateKey.new_ed25519(private_key_bytes_ret)
 
 public_key: PublicKey = private_key_ret.public_key()
 
-account: Address = derive_virtual_account_address_from_public_key(
+account: Address = Address.preallocated_account_address_from_public_key(
         public_key, network_id
     )
 #print(f"Babylon Address where Owner Badge is Located: {account.as_str()}")
@@ -63,8 +63,8 @@ xrd_address: Address = address_book.resource_addresses.xrd
 owner_badge: str = ("resource_rdx1nggtpr03hdw247v9cve0xcd09cpr9tkxzc0w3dv8s9l8uzcln4ha7e")
 
 print('\n')
-manifest: TransactionManifest = (
-        ManifestBuilder()
+manifest: TransactionManifestV1 = (
+        ManifestV1Builder()
         .call_method(
             ManifestBuilderAddress.STATIC(Address(SOURCE_ACCOUNT)),
             "lock_fee",
@@ -87,19 +87,19 @@ manifest: TransactionManifest = (
                 ),
             ],
         )
-       .call_method(
-           ManifestBuilderAddress.STATIC(Address(OWNER_COMPONENT_ADDRESS)),
-           "create_auth_badge_proof", []
-       )
-       .call_method(
-           ManifestBuilderAddress.STATIC(Address(BABYLON_VALIDATOR_ADDRESS)),
-           "update_key",
-           [
-               ManifestBuilderValue.ARRAY_VALUE(
-                   ManifestBuilderValueKind.U8_VALUE,
-                   [ManifestBuilderValue.U8_VALUE(byte) for byte in backup_public_key],
+        .call_method(
+            ManifestBuilderAddress.STATIC(Address(OWNER_COMPONENT_ADDRESS)),
+            "create_auth_badge_proof", []
+        )
+        .call_method(
+            ManifestBuilderAddress.STATIC(Address(BABYLON_VALIDATOR_ADDRESS)),
+            "update_key",
+            [
+                ManifestBuilderValue.ARRAY_VALUE(
+                    ManifestBuilderValueKind.U8_VALUE,
+                    [ManifestBuilderValue.U8_VALUE(byte) for byte in backup_public_key],
                 )
-           ],
+            ],
         )
         .build(network_id)
     )
@@ -109,7 +109,7 @@ manifest: TransactionManifest = (
 #print(manifest.instructions().as_str())
 logging.info('Update Key Manifest: %s', manifest.instructions().as_str())
 
-manifest.statically_validate()
+manifest.statically_validate(network_id)
 
 urlint = "https://mainnet.radixdlt.com/statistics/validators/uptime"
 
@@ -147,7 +147,7 @@ data = {
 logging.info('Please check manifest/addresses above for accuracy.  Validator Missed Proposals will commence logging in 30s')
 time.sleep(30)
 
-while missed_proposals < 38:
+while missed_proposals < 13:
   data = {"at_ledger_state": {"epoch": current_epoch},"from_ledger_state": {"epoch": epoch_history},"validator_addresses": [BABYLON_VALIDATOR_ADDRESS]}
   response = requests.post(url1, json=data)
   response_dict = response.json()
@@ -160,10 +160,10 @@ while missed_proposals < 38:
   current_epoch = response_dict["ledger_state"]["epoch"]
   epoch_history = int(current_epoch) - int(3)
 
-if missed_proposals > 37:
+if missed_proposals > 12:
   logging.info('Missed Proposals Exceed Set Limit - Failing Over Now...')
   end_epoch = int(current_epoch) + int(5)
-  header: TransactionHeader = TransactionHeader(
+  header: TransactionHeaderV1 = TransactionHeaderV1(
     network_id=network_id,
     start_epoch_inclusive=current_epoch,
     end_epoch_exclusive=end_epoch,
@@ -172,14 +172,14 @@ if missed_proposals > 37:
     notary_is_signatory=True,
     tip_percentage=0,
   )
-  transaction: NotarizedTransaction = (
-    TransactionBuilder()
+  transaction: NotarizedTransactionV1 = (
+    TransactionV1Builder()
     .header(header)
     .manifest(manifest)
     .sign_with_private_key(private_key_ret)
     .notarize_with_private_key(private_key_ret)
   )
-  transaction.statically_validate(ValidationConfig.default(network_id))
+  transaction.statically_validate(network_id)
   print('\n')
   logging.info('Transaction Hash: %s', transaction.intent_hash().as_str())
   print('\n')
@@ -187,7 +187,7 @@ if missed_proposals > 37:
   url2 = "https://mainnet.radixdlt.com/transaction/submit"
   headers = {"Content-Type": "application/json; charset=utf-8"}
   data2 = {
-     "notarized_transaction_hex": bytearray(transaction.compile()).hex()
+     "notarized_transaction_hex": bytearray(transaction.to_payload_bytes()).hex()
   }
   response = requests.post(url2, json=data2)
   time.sleep(5)
