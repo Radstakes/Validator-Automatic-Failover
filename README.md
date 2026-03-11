@@ -7,6 +7,10 @@ All tools are provided for free to the Radix community, but if they are of benef
 
 ## Instructions
 
+**Update - 11/03/2026**
+
+Script updated to v2.3.4 of RET. Thanks Ed!
+
 **Update - 31/12/2024**
 
 A new version of the script has been added, see `autofailovermanager.py`
